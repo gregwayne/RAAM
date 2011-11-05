@@ -1,4 +1,4 @@
-classdef SimpleNet
+classdef SNet
     
     properties
 
@@ -30,14 +30,14 @@ classdef SimpleNet
     
     methods
         
-        function obj = SimpleNet(N0,N1,N2,g,eta)
+        function obj = SNet(N0,N1,N2,g,eta)
             
             obj.N0      = N0;
             obj.N1      = N1;
             obj.N2      = N2;
             
             obj.W1      = g*randn(N1,N0)/sqrt(N0);
-            obj.W2      = g*randn(N2,N1)/sqrt(N1);
+            obj.W2      = 0*g*randn(N2,N1)/sqrt(N1);
             
             obj.X1      = zeros(N1,1);
             obj.R1      = zeros(N1,1);
@@ -76,17 +76,22 @@ classdef SimpleNet
             
         end
         
-        function obj = Minimize(obj,X0,target,eta_min,iters,constraint_on,constraint)
+        function obj = Minimize(obj,p)
+            
+            X0              = p.X0;
+            eta_min         = p.eta_min;
+            iters           = p.iters;
+            constraint      = p.constraint;
+            cw              = p.cw;
+            target          = p.target;
+            cidxs           = p.cidxs;
             
             for iter=1:iters
                        
-                obj = obj.FProp([1;X0]);
-                obj = obj.BProp(target-obj.R2);
-                if constraint_on
-                    X0  = LinearThreshold(X0 + eta_min*obj.D0(2:end) + eta_min*(constraint-X0));
-                else
-                    X0  = LinearThreshold(X0 + eta_min*obj.D0(2:end));
-                end
+                obj         = obj.FProp(X0);
+                obj         = obj.BProp(target-obj.R2);
+                sc          = cw*(constraint-X0); % soft constraint
+                X0(cidxs)   = LinearThreshold(X0(cidxs) + eta_min*obj.D0(cidxs) + eta_min*sc(cidxs));
 
             end
                        

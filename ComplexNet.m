@@ -16,10 +16,10 @@ classdef ComplexNet
         
         function obj = ComplexNet(N0,N1,N2,g,eta)
            
-            obj.net     = SimpleNet(N0,N1,N2,g,eta);
-            obj.t       = 1;
-            obj.sigma_sq_in    = ones(N0,1);
-            obj.sigma_sq_out   = ones(N2,1);
+            obj.net             = SimpleNet(N0,N1,N2,g,eta);
+            obj.t               = 1;
+            obj.sigma_sq_in     = ones(N0,1);
+            obj.sigma_sq_out    = ones(N2,1);
             
         end
                
@@ -37,13 +37,21 @@ classdef ComplexNet
             
             obj.sigma_sq_in     = (1/t)*X0.^2 + obj.sigma_sq_in.*(t-1)/t;
             
-        end             
+        end
+        
+        function R2 = FastProp(obj,X0)
+            
+            X0  = X0./sqrt(obj.sigma_sq_in);
+            R2  = obj.net.FastProp(X0).*sqrt(obj.sigma_sq_out);
+            
+        end
                                      
         function obj = ErrorLearn(obj,target)
            
-            t       = obj.t;
-            target  = target./sqrt(obj.sigma_sq_out);
-            obj.net = obj.net.ErrorLearn(target-obj.net.R2);
+            t           = obj.t;
+            delta       = target - obj.R2;
+            delta_net   = delta.*sqrt(obj.sigma_sq_out);
+            obj.net     = obj.net.ErrorLearn(delta_net);
             
             obj.sigma_sq_out    = (1/t)*target.^2 + obj.sigma_sq_out.*(t-1)/t; 
             
